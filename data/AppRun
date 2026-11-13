@@ -1,4 +1,21 @@
 #!/bin/sh
 set -eu
 app_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-exec python3 "$app_dir/usr/share/window-lens/window_lens.py" "$@"
+export DESKFORGE_BUNDLED=1
+export LD_LIBRARY_PATH="$app_dir/usr/lib"
+export XDG_DATA_DIRS="$app_dir/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+export GSETTINGS_SCHEMA_DIR="$app_dir/usr/share/glib-2.0/schemas"
+export GIO_MODULE_DIR="$app_dir/usr/lib/gio/modules"
+export GSK_RENDERER="${GSK_RENDERER:-cairo}"
+unset GTK_PATH GTK_MODULES GIO_EXTRA_MODULES
+for loader in "$app_dir"/usr/lib/libpixbufloader-svg.so; do
+    if [ -f "$loader" ]; then
+        cache=$(mktemp)
+        trap 'rm -f "$cache"' EXIT
+        printf '"%s"\n"svg" 6 "gdk-pixbuf" "Scalable Vector Graphics" "LGPL"\n"image/svg+xml" ""\n"svg" ""\n" <svg" "*    " 100\n" <!DOCTYPE svg" "*             " 100\n\n' "$loader" > "$cache"
+        export GDK_PIXBUF_MODULE_FILE="$cache"
+        "$app_dir/usr/bin/deskforge" "$@"
+        exit $?
+    fi
+done
+exec "$app_dir/usr/bin/deskforge" "$@"

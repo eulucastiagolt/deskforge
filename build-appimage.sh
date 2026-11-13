@@ -3,14 +3,18 @@ set -euo pipefail
 cd -- "$(dirname -- "$0")"
 
 arch=$(uname -m)
-name="Window-Lens-${arch}.AppImage"
-app_id=io.github.windowlens.WindowLens
+name="Deskforge-${arch}.AppImage"
+app_id=io.github.eulucastiagolt.Deskforge
 app_dir=$(mktemp -d)
 chmod 755 "$app_dir"
 trap 'rm -rf -- "$app_dir"' EXIT
 
 install -Dm755 data/AppRun "$app_dir/AppRun"
-install -Dm644 window_lens.py "$app_dir/usr/share/window-lens/window_lens.py"
+if [[ -z ${DESKFORGE_BINARY:-} ]]; then
+    cargo build --locked --release
+fi
+install -Dm755 "${DESKFORGE_BINARY:-${CARGO_TARGET_DIR:-target}/release/deskforge}" "$app_dir/usr/bin/deskforge"
+bash data/bundle-runtime.sh "$app_dir"
 install -Dm644 "data/$app_id.desktop" "$app_dir/$app_id.desktop"
 install -Dm644 "data/$app_id.desktop" "$app_dir/usr/share/applications/$app_id.desktop"
 install -Dm644 "data/$app_id.svg" "$app_dir/$app_id.svg"

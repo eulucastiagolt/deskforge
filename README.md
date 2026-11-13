@@ -1,48 +1,36 @@
-# Window Lens
+# Deskforge
 
-Seletor de janelas para KDE Plasma. Clique em uma janela para consultar seus dados, reunir classes de aplicativos e copiar a expressão regular para as regras do KWin.
+Ferramentas de desktop para KDE Plasma. O Deskforge começou como Window Lens e mantém o seletor de janelas e o testador de expressões regulares.
 
 ## Instalação
 
-O AppImage é para Linux x86_64 com KDE Plasma 6. Ele usa o Python 3, PyGObject, GTK4, Libadwaita 1.6 ou mais recente e o utilitário `qdbus6` (ou `qdbus`) do sistema.
-
-No Arch Linux, instale as dependências com:
+Baixe o AppImage x86_64 nos [releases](https://github.com/eulucastiagolt/deskforge/releases). O arquivo Deskforge inclui as bibliotecas GTK4 e usa a sessão do KDE Plasma para consultar janelas.
 
 ```bash
-sudo pacman -S --needed python python-gobject gtk4 libadwaita qt6-tools
+chmod +x Deskforge-x86_64.AppImage
+./Deskforge-x86_64.AppImage
 ```
-
-Baixe o `Window-Lens-x86_64.AppImage` no [release mais recente](https://github.com/eulucastiagolt/window-lens/releases/latest). Integre o arquivo pelo AppManager ou abra-o diretamente:
-
-```bash
-chmod +x Window-Lens-x86_64.AppImage
-./Window-Lens-x86_64.AppImage
-```
-
-Para executar pelo código-fonte, use `python3 window_lens.py` na pasta do projeto com as mesmas dependências.
 
 ## Uso
 
-Clique em **Selecionar janela** e depois na janela que deseja consultar. Repita para cada aplicativo. Em **Classes coletadas**, copie uma classe individual ou remova entradas da lista. Use o botão ao lado de **Expressão regular** para copiar todas as classes em uma única regex.
+Em **Seletor de janelas**, clique em **Selecionar janela** e depois na janela que deseja consultar. Filtre a tabela por nome ou valor e copie as propriedades exibidas. Cada classe coletada pode ser copiada ou removida. O rodapé gera uma única regex com todas as classes.
 
-No editor de regras do KDE, cole a regex em **Classe da janela (aplicativo)**, selecione **Expressão regular** e deixe **Corresponder à classe da janela completa** em **Não**.
+No KDE, cole a expressão em **Classe da janela (aplicativo)**, selecione **Expressão regular** e deixe **Corresponder à classe da janela completa** em **Não**.
+
+Em **Testador de regex**, digite um valor por linha para conferir quantas linhas correspondem à expressão.
 
 ### Atalho global
 
-Em **Configurações**, copie o comando do seletor e clique em **Abrir atalhos do KDE**. Na tela de atalhos, use **Adicionar novo → Comando ou script**, cole o comando e atribua uma combinação. O comando abre diretamente o seletor mesmo com o app fechado. Caso mova o AppImage, atualize o caminho do comando no KDE.
+Em **Configurações**, copie o comando do seletor e abra **Atalhos do KDE**. Adicione um **Comando ou script** e atribua a combinação desejada. Se você usava um atalho do Window Lens, atualize o caminho para o AppImage do Deskforge.
 
-## Gerar AppImage
+## Desenvolvimento
 
-Execute `./build-appimage.sh` com `appimagetool` e `rsvg-convert` instalados. O arquivo será criado em `dist/`. Use `APPIMAGE_RUNTIME` para indicar um runtime Type 2 local se necessário.
+O código usa Rust e GTK4. Instale as ferramentas de desenvolvimento da sua distribuição e execute `cargo run --locked`. O seletor consulta o KWin pelo D-Bus da sessão.
 
-## Publicar com atualizações
+Para gerar o AppImage, execute `./build-appimage.sh` com `appimagetool`, `rsvg-convert`, `glib-compile-schemas` e o tema Adwaita disponíveis no ambiente de build. O resultado fica em `dist/`. A compatibilidade com glibc depende do ambiente de build. O workflow de distribuição usa Ubuntu 24.04.
 
-O workflow do GitHub publica o AppImage e o arquivo `.zsync` ao receber uma tag anotada como `v0.1.0`. Escreva as notas do release na mensagem da tag. Ele usa o dono e nome reais do repositório para embutir a informação de atualização. Integre o AppImage publicado pelo AppManager para que ele possa consultar os releases seguintes. Mantenha os nomes dos dois arquivos iguais nas novas versões.
+## Publicação
 
-Para empacotar manualmente com o mesmo formato, instale `zsyncmake` e execute:
+Atualize a versão em `Cargo.toml` e os dados em `data/*.metainfo.xml`. Use versionamento semântico `MAJOR.MINOR.PATCH`. Durante a série 0.x, adições e mudanças incompatíveis avançam o MINOR e correções compatíveis avançam o PATCH.
 
-```bash
-UPDATE_INFORMATION='gh-releases-zsync|DONO|REPOSITORIO|latest|Window-Lens-x86_64.AppImage.zsync' ./build-appimage.sh
-```
-
-Em cada release, atualize também a versão em `window_lens.py` e os dados de lançamento em `data/*.metainfo.xml`.
+O workflow gera o AppImage e os metadados `.zsync` a partir de uma tag anotada, como `v0.3.0`. O nome do arquivo do Deskforge é fixo entre releases para facilitar as atualizações pelo AppManager. Usuários do AppImage antigo do Window Lens devem baixar o Deskforge na primeira migração.

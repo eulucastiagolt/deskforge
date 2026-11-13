@@ -1,13 +1,13 @@
 [Desktop Entry]
 Type=Application
-Name=Window Lens
+Name=Deskforge
 Comment=Consulte classes de janelas do KDE e gere expressões regulares
-Exec=window-lens
-Icon=io.github.windowlens.WindowLens
+Exec=deskforge
+Icon=io.github.eulucastiagolt.Deskforge
 Terminal=false
 Categories=Utility;
 Actions=Pick;
 
 [Desktop Action Pick]
 Name=Selecionar janela
-Exec=window-lens --pick
+Exec=deskforge --pick
