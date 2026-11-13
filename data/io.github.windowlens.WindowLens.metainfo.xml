@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.windowlens.WindowLens</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <name>Window Lens</name>
+  <summary>Inspect KDE windows and generate window rule expressions</summary>
+  <description>
+    <p>Pick windows with KWin, collect application classes and copy a regular expression for KDE window rules.</p>
+  </description>
+  <launchable type="desktop-id">io.github.windowlens.WindowLens.desktop</launchable>
+  <releases>
+    <release version="0.1.0" date="2026-11-13"/>
+  </releases>
+</component>

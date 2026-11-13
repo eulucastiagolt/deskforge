@@ -1,0 +1,32 @@
+name: AppImage
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin zsync
+          curl --fail --location --retry 3 https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -o /tmp/appimagetool
+          chmod +x /tmp/appimagetool
+      - name: Build updateable AppImage
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: '1'
+          UPDATE_INFORMATION: gh-releases-zsync|${{ github.repository_owner }}|${{ github.event.repository.name }}|latest|Window-Lens-x86_64.AppImage.zsync
+        run: |
+          export PATH="/tmp:$PATH"
+          ./build-appimage.sh
+          test -s dist/Window-Lens-x86_64.AppImage.zsync
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --verify-tag --notes-from-tag --title "Window Lens ${GITHUB_REF_NAME}" --latest dist/Window-Lens-x86_64.AppImage dist/Window-Lens-x86_64.AppImage.zsync
