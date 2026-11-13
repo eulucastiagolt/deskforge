@@ -15,7 +15,7 @@ jobs:
       - name: Install packaging tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-4-dev librsvg2-bin librsvg2-common zsync adwaita-icon-theme libglib2.0-bin
+          sudo apt-get install -y libgtk-4-dev libadwaita-1-dev librsvg2-bin librsvg2-common zsync adwaita-icon-theme libglib2.0-bin
           curl --fail --location --retry 3 https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -o /tmp/appimagetool
           chmod +x /tmp/appimagetool
       - name: Set up Rust

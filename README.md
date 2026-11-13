@@ -4,7 +4,7 @@ Ferramentas de desktop para KDE Plasma. O Deskforge começou como Window Lens e 
 
 ## Instalação
 
-Baixe o AppImage x86_64 nos [releases](https://github.com/eulucastiagolt/deskforge/releases). O arquivo Deskforge inclui as bibliotecas GTK4 e usa a sessão do KDE Plasma para consultar janelas.
+Baixe o AppImage x86_64 nos [releases](https://github.com/eulucastiagolt/deskforge/releases). O arquivo Deskforge inclui GTK4 e Libadwaita e usa a sessão do KDE Plasma para consultar janelas.
 
 ```bash
 chmod +x Deskforge-x86_64.AppImage
@@ -25,7 +25,7 @@ Em **Configurações**, copie o comando do seletor e abra **Atalhos do KDE**. Ad
 
 ## Desenvolvimento
 
-O código usa Rust e GTK4. Instale as ferramentas de desenvolvimento da sua distribuição e execute `cargo run --locked`. O seletor consulta o KWin pelo D-Bus da sessão.
+O código usa Rust, GTK4 e Libadwaita 1.5 ou posterior. Instale as ferramentas de desenvolvimento da sua distribuição e execute `cargo run --locked`. O seletor consulta o KWin pelo D-Bus da sessão.
 
 Para gerar o AppImage, execute `./build-appimage.sh` com `appimagetool`, `rsvg-convert`, `glib-compile-schemas` e o tema Adwaita disponíveis no ambiente de build. O resultado fica em `dist/`. A compatibilidade com glibc depende do ambiente de build. O workflow de distribuição usa Ubuntu 24.04.
 

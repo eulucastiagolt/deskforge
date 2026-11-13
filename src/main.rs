@@ -1,5 +1,6 @@
-use gtk::{gio, glib, prelude::*};
+use gtk::{gio, glib};
 use gtk4 as gtk;
+use libadwaita::{self as adw, prelude::*};
 use std::{cell::RefCell, collections::BTreeMap, path::PathBuf, rc::Rc};
 
 const APP_ID: &str = "io.github.eulucastiagolt.Deskforge";
@@ -56,7 +57,6 @@ fn scroll(child: &impl IsA<gtk::Widget>) -> gtk::ScrolledWindow {
         .hexpand(true)
         .min_content_width(190)
         .min_content_height(150)
-        .has_frame(true)
         .build()
 }
 
@@ -138,6 +138,7 @@ fn refresh_classes(list: &gtk::ListBox, expression: &gtk::Entry, state: &Rc<RefC
 
 fn regex_page(stack: &gtk::Stack) -> gtk::Entry {
     let page = panel();
+    page.add_css_class("workspace");
     let pattern = gtk::Entry::builder()
         .placeholder_text("Cole ou digite uma expressão")
         .build();
@@ -145,12 +146,20 @@ fn regex_page(stack: &gtk::Stack) -> gtk::Entry {
         .monospace(true)
         .wrap_mode(gtk::WrapMode::WordChar)
         .build();
+    pattern.add_css_class("monospace");
+    text.set_left_margin(12);
+    text.set_right_margin(12);
+    text.set_top_margin(10);
+    text.set_bottom_margin(10);
     let result = label("Digite uma expressão para testar.");
+    result.add_css_class("dim-label");
     result.set_wrap(true);
     page.append(&heading("Expressão regular"));
     page.append(&pattern);
     page.append(&heading("Texto para testar · um valor por linha"));
-    page.append(&scroll(&text));
+    let editor = scroll(&text);
+    editor.add_css_class("regex-editor");
+    page.append(&editor);
     page.append(&result);
     let update = Rc::new(glib::clone!(
         #[weak]
@@ -209,25 +218,23 @@ fn shortcut_command() -> String {
     format!("{} --pick", glib::shell_quote(executable).to_string_lossy())
 }
 
-fn settings(window: &gtk::ApplicationWindow) {
-    let dialog = gtk::Window::builder()
+fn settings(window: &adw::ApplicationWindow) {
+    let dialog = adw::PreferencesDialog::builder()
         .title("Configurações")
-        .default_width(500)
-        .transient_for(window)
-        .modal(true)
         .build();
-    let content = panel();
-    content.append(&heading("Atalho global"));
-    let instructions = label(
-        "No KDE, adicione um atalho do tipo Comando ou script. Cole o comando abaixo e escolha uma combinação de teclas.",
-    );
-    instructions.set_wrap(true);
-    content.append(&instructions);
-    let command = gtk::Entry::builder()
+    let page = adw::PreferencesPage::new();
+    let group = adw::PreferencesGroup::builder()
+        .title("Atalho global")
+        .description(
+            "No KDE, adicione um atalho do tipo Comando ou script e cole o comando abaixo.",
+        )
+        .build();
+    let command = adw::EntryRow::builder()
+        .title("Comando do seletor")
         .text(shortcut_command())
         .editable(false)
         .build();
-    content.append(&command);
+    group.add(&command);
     let actions = gtk::Box::new(gtk::Orientation::Horizontal, 8);
     let copy = gtk::Button::with_label("Copiar comando");
     copy.connect_clicked(move |button| button.clipboard().set_text(&shortcut_command()));
@@ -254,78 +261,145 @@ fn settings(window: &gtk::ApplicationWindow) {
             }
         }
     ));
-    actions.append(&copy);
+    copy.set_valign(gtk::Align::Center);
+    copy.add_css_class("flat");
+    command.add_suffix(&copy);
+    open.add_css_class("pill");
+    actions.set_margin_top(12);
     actions.append(&open);
-    content.append(&actions);
-    content.append(&status);
-    dialog.set_child(Some(&content));
-    dialog.present();
+    group.add(&actions);
+    group.add(&status);
+    page.add(&group);
+    dialog.add(&page);
+    dialog.present(Some(window));
 }
 
-fn build(app: &gtk::Application) -> gtk::ApplicationWindow {
+fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let state = Rc::new(RefCell::new(Inspector::default()));
-    let window = gtk::ApplicationWindow::builder()
+    let window = adw::ApplicationWindow::builder()
         .application(app)
         .title("Deskforge")
         .default_width(1070)
         .default_height(640)
         .build();
-    let header = gtk::HeaderBar::new();
-    window.set_titlebar(Some(&header));
+    let header = adw::HeaderBar::new();
 
-    let layout = gtk::Box::new(gtk::Orientation::Horizontal, 0);
-    let stack = gtk::Stack::builder().hexpand(true).vexpand(true).build();
-    let sidebar = column(5);
-    sidebar.set_width_request(166);
-    sidebar.add_css_class("sidebar");
+    let stack = gtk::Stack::builder()
+        .hexpand(true)
+        .vexpand(true)
+        .transition_type(gtk::StackTransitionType::Crossfade)
+        .build();
+    let sidebar = column(0);
+    sidebar.add_css_class("tools-sidebar");
     let nav = gtk::StackSidebar::builder()
         .stack(&stack)
         .vexpand(true)
         .build();
     sidebar.append(&nav);
-    let preferences = gtk::Button::with_label("Configurações");
-    preferences.connect_clicked(glib::clone!(
+
+    let preferences = gio::SimpleAction::new("settings", None);
+    preferences.connect_activate(glib::clone!(
         #[weak]
         window,
-        move |_| settings(&window)
+        move |_, _| settings(&window)
     ));
-    sidebar.append(&preferences);
-    let about = gtk::Button::with_label("Sobre");
-    about.connect_clicked(glib::clone!(
+    window.add_action(&preferences);
+    let about = gio::SimpleAction::new("about", None);
+    about.connect_activate(glib::clone!(
         #[weak]
         window,
-        move |_| {
-            gtk::AboutDialog::builder()
-                .transient_for(&window)
-                .modal(true)
-                .program_name("Deskforge")
+        move |_, _| {
+            adw::AboutDialog::builder()
+                .application_name("Deskforge")
+                .application_icon("find-location-symbolic")
                 .version(env!("CARGO_PKG_VERSION"))
                 .comments("Ferramentas de janelas e expressões regulares para KDE Plasma.")
                 .website("https://github.com/eulucastiagolt/deskforge")
                 .build()
-                .present();
+                .present(Some(&window));
         }
     ));
-    sidebar.append(&about);
-    layout.append(&sidebar);
-    layout.append(&gtk::Separator::new(gtk::Orientation::Vertical));
-    layout.append(&stack);
-    window.set_child(Some(&layout));
+    window.add_action(&about);
+
+    let menu = gio::Menu::new();
+    menu.append(Some("Configurações"), Some("win.settings"));
+    menu.append(Some("Sobre o Deskforge"), Some("win.about"));
+    header.pack_end(
+        &gtk::MenuButton::builder()
+            .icon_name("open-menu-symbolic")
+            .tooltip_text("Menu principal")
+            .menu_model(&menu)
+            .build(),
+    );
+
+    let sidebar_view = adw::ToolbarView::new();
+    let sidebar_header = adw::HeaderBar::new();
+    sidebar_header.set_show_end_title_buttons(false);
+    sidebar_header.set_title_widget(Some(&adw::WindowTitle::new("Deskforge", "")));
+    sidebar_view.add_top_bar(&sidebar_header);
+    sidebar_view.set_content(Some(&sidebar));
+
+    let toolbar_view = adw::ToolbarView::new();
+    header.set_show_start_title_buttons(false);
+    toolbar_view.add_top_bar(&header);
+    toolbar_view.set_content(Some(&stack));
+    let split = adw::OverlaySplitView::builder()
+        .sidebar(&sidebar_view)
+        .content(&toolbar_view)
+        .min_sidebar_width(200.0)
+        .max_sidebar_width(230.0)
+        .build();
+    let toggle = gtk::ToggleButton::builder()
+        .icon_name("sidebar-show-symbolic")
+        .tooltip_text("Mostrar ferramentas")
+        .build();
+    split
+        .bind_property("show-sidebar", &toggle, "active")
+        .bidirectional()
+        .sync_create()
+        .build();
+    header.pack_start(&toggle);
+    let title = adw::WindowTitle::new("Seletor de janelas", "");
+    header.set_title_widget(Some(&title));
+    stack.connect_visible_child_name_notify(glib::clone!(
+        #[weak]
+        title,
+        move |stack| {
+            let is_regex = stack.visible_child_name().as_deref() == Some("regex");
+            title.set_title(if is_regex {
+                "Testador de regex"
+            } else {
+                "Seletor de janelas"
+            });
+        }
+    ));
+    window.set_content(Some(&split));
 
     let inspector = panel();
+    inspector.add_css_class("workspace");
     stack.add_titled(&inspector, Some("inspector"), "Seletor de janelas");
-    let toolbar = gtk::Box::new(gtk::Orientation::Horizontal, 12);
     let pick = gtk::Button::builder()
-        .label("Selecionar janela")
+        .child(
+            &adw::ButtonContent::builder()
+                .icon_name("find-location-symbolic")
+                .label("Selecionar janela")
+                .build(),
+        )
         .action_name("win.pick")
+        .tooltip_text("Selecionar janela (Ctrl+P)")
         .build();
     pick.add_css_class("suggested-action");
-    let status = label("Clique em Selecionar janela para começar.");
+    pick.add_css_class("pill");
+    header.pack_start(&pick);
+    stack.connect_visible_child_name_notify(glib::clone!(
+        #[weak]
+        pick,
+        move |stack| pick.set_visible(stack.visible_child_name().as_deref() == Some("inspector"))
+    ));
+    let status = label("Selecione uma janela para consultar suas propriedades.");
     status.set_wrap(true);
     status.add_css_class("dim-label");
-    toolbar.append(&pick);
-    toolbar.append(&status);
-    inspector.append(&toolbar);
+    inspector.append(&status);
 
     let panes = gtk::Paned::builder()
         .orientation(gtk::Orientation::Horizontal)
@@ -341,12 +415,14 @@ fn build(app: &gtk::Application) -> gtk::ApplicationWindow {
     empty.set_margin_top(8);
     classes.set_placeholder(Some(&empty));
     let class_panel = panel();
+    class_panel.add_css_class("inspector-card");
     class_panel.append(&heading("Classes coletadas"));
     class_panel.append(&scroll(&classes));
     panes.set_start_child(Some(&class_panel));
     panes.set_shrink_start_child(false);
 
     let property_panel = panel();
+    property_panel.add_css_class("inspector-card");
     property_panel.append(&heading("Propriedades da janela"));
     let filter = gtk::SearchEntry::builder()
         .placeholder_text("Filtrar propriedades")
@@ -371,6 +447,7 @@ fn build(app: &gtk::Application) -> gtk::ApplicationWindow {
         move |filter| refresh_properties(&fields, &state.borrow(), &filter.text())
     ));
     let copy_fields = gtk::Button::with_label("Copiar propriedades");
+    copy_fields.add_css_class("flat");
     copy_fields.set_halign(gtk::Align::End);
     copy_fields.connect_clicked(glib::clone!(
         #[weak]
@@ -397,6 +474,7 @@ fn build(app: &gtk::Application) -> gtk::ApplicationWindow {
         .hexpand(true)
         .placeholder_text("Selecione uma janela para gerar a regex")
         .build();
+    expression.add_css_class("monospace");
     let regex_row = gtk::Box::new(gtk::Orientation::Horizontal, 8);
     regex_row.append(&expression);
     let copy_regex = gtk::Button::from_icon_name("edit-copy-symbolic");
@@ -536,10 +614,21 @@ async fn query_window() -> Result<Properties, glib::Error> {
 }
 
 fn main() -> glib::ExitCode {
-    let app = gtk::Application::builder()
+    let app = adw::Application::builder()
         .application_id(APP_ID)
         .flags(gio::ApplicationFlags::HANDLES_COMMAND_LINE)
         .build();
+    app.connect_startup(|_| {
+        if let Some(display) = gtk::gdk::Display::default() {
+            let provider = gtk::CssProvider::new();
+            provider.load_from_data(include_str!("style.css"));
+            gtk::style_context_add_provider_for_display(
+                &display,
+                &provider,
+                gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
+            );
+        }
+    });
     app.add_main_option(
         "pick",
         glib::Char::from(b'p'),
@@ -552,7 +641,7 @@ fn main() -> glib::ExitCode {
         let window = app
             .windows()
             .into_iter()
-            .find_map(|window| window.downcast::<gtk::ApplicationWindow>().ok())
+            .find_map(|window| window.downcast::<adw::ApplicationWindow>().ok())
             .unwrap_or_else(|| build(app));
         window.present();
         if command.options_dict().contains("pick") {

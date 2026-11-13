@@ -7,7 +7,7 @@ export XDG_DATA_DIRS="$app_dir/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/
 export GSETTINGS_SCHEMA_DIR="$app_dir/usr/share/glib-2.0/schemas"
 export GIO_MODULE_DIR="$app_dir/usr/lib/gio/modules"
 export GSK_RENDERER="${GSK_RENDERER:-cairo}"
-unset GTK_PATH GTK_MODULES GIO_EXTRA_MODULES
+unset GTK_THEME GTK_PATH GTK_MODULES GIO_EXTRA_MODULES
 for loader in "$app_dir"/usr/lib/libpixbufloader-svg.so; do
     if [ -f "$loader" ]; then
         cache=$(mktemp)

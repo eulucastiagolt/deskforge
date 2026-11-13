@@ -1,0 +1,34 @@
+.tools-sidebar {
+    padding: 8px;
+}
+
+.tools-sidebar stacksidebar list {
+    background: transparent;
+}
+
+.tools-sidebar stacksidebar row {
+    border-radius: 9px;
+    margin-bottom: 4px;
+}
+
+.workspace {
+    padding: 8px;
+}
+
+.inspector-card {
+    padding: 14px;
+    border-radius: 14px;
+    background: @card_bg_color;
+    color: @card_fg_color;
+    box-shadow: 0 0 0 1px alpha(currentColor, 0.09);
+}
+
+.inspector-card list {
+    background: transparent;
+}
+
+.regex-editor {
+    border-radius: 12px;
+    background: @view_bg_color;
+    box-shadow: 0 0 0 1px alpha(currentColor, 0.12);
+}
